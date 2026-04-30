@@ -228,6 +228,58 @@ def _bash_impl(command: str, timeout: float = None) -> str:
         return json.dumps({"error": str(e)})
 
 
+def get_tools_definition() -> list:
+    """Restituisce la definizione dei tool per llama.cpp."""
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": "read",
+                "description": "Read the content of a file. Supports offset/limit for pagination.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {
+                            "type": "string",
+                            "description": "Path to the file to read"
+                        },
+                        "offset": {
+                            "type": "number",
+                            "description": "Line number to start reading from (1-indexed)"
+                        },
+                        "limit": {
+                            "type": "number",
+                            "description": "Maximum number of lines to read"
+                        }
+                    },
+                    "required": ["path"]
+                }
+            }
+        },
+        {
+            "type": "function",
+            "function": {
+                "name": "bash",
+                "description": "Execute a bash command in the current working directory. Returns stdout and stderr.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "command": {
+                            "type": "string",
+                            "description": "Bash command to execute"
+                        },
+                        "timeout": {
+                            "type": "number",
+                            "description": "Timeout in seconds (optional)"
+                        }
+                    },
+                    "required": ["command"]
+                }
+            }
+        }
+    ]
+
+
 if __name__ == "__main__":
     # Enable debug mode for testing
     set_debug_mode(True)

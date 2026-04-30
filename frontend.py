@@ -32,6 +32,7 @@ from tools import (
     _bash_impl,
     _format_tool_result,
     _tool_debug,
+    get_tools_definition,
 )
 
 # ── Debug flag ──────────────────────────────────────────────────────────────
@@ -94,7 +95,7 @@ async def _llama_chat_with_data(messages: list, model_id: str) -> dict:
         _debug_print(f"[DEBUG GEMMA] Last message: {json.dumps(messages[-1], indent=2, ensure_ascii=False)}")
         _debug_print("[END DEBUG GEMMA]\n")
 
-    # Definizione del tool read
+    # Definizione dei toolls (da spostare in tools.py)
     tools = [
         {
             "type": "function",
