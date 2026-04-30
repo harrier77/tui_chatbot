@@ -27,6 +27,7 @@ from backend import (
 )
 
 from tools import (
+    tools,
     set_debug_mode,
     _read_impl,
     _bash_impl,
@@ -95,55 +96,8 @@ async def _llama_chat_with_data(messages: list, model_id: str) -> dict:
         _debug_print(f"[DEBUG GEMMA] Last message: {json.dumps(messages[-1], indent=2, ensure_ascii=False)}")
         _debug_print("[END DEBUG GEMMA]\n")
 
-    # Definizione dei toolls (da spostare in tools.py)
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "read",
-                "description": "Read the content of a file. Supports offset/limit for pagination.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "path": {
-                            "type": "string",
-                            "description": "Path to the file to read"
-                        },
-                        "offset": {
-                            "type": "number",
-                            "description": "Line number to start reading from (1-indexed)"
-                        },
-                        "limit": {
-                            "type": "number",
-                            "description": "Maximum number of lines to read"
-                        }
-                    },
-                    "required": ["path"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "bash",
-                "description": "Execute a bash command in the current working directory. Returns stdout and stderr.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "command": {
-                            "type": "string",
-                            "description": "Bash command to execute"
-                        },
-                        "timeout": {
-                            "type": "number",
-                            "description": "Timeout in seconds (optional)"
-                        }
-                    },
-                    "required": ["command"]
-                }
-            }
-        }
-    ]
+    # Definizione dei toolls (spostata in tools.py)
+   
 
     full_messages = []
     if system_prompt:
@@ -181,46 +135,13 @@ async def _llama_chat_stream(messages: list, model_id: str, tool_calls_collector
     else:
         system_prompt = _SYSTEM_PROMPTS.get("default", "")
 
-    tools = [
-        {
-            "type": "function",
-            "function": {
-                "name": "read",
-                "description": "Read the content of a file. Supports offset/limit for pagination.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "path": {"type": "string", "description": "Path to the file to read"},
-                        "offset": {"type": "number", "description": "Line number to start reading from (1-indexed)"},
-                        "limit": {"type": "number", "description": "Maximum number of lines to read"}
-                    },
-                    "required": ["path"]
-                }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "bash",
-                "description": "Execute a bash command in the current working directory. Returns stdout and stderr.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "command": {"type": "string", "description": "Bash command to execute"},
-                        "timeout": {"type": "number", "description": "Timeout in seconds (optional)"}
-                    },
-                    "required": ["command"]
-                }
-            }
-        }
-    ]
-
     # Prepara messaggi con system prompt
     full_messages = []
     if system_prompt:
         full_messages.append({"role": "system", "content": system_prompt})
     full_messages.extend(messages)
 
+    # Usa tools importato da tools.py invece di ridichiararlo
     payload = {
         "model": model_id,
         "messages": full_messages,
@@ -475,11 +396,18 @@ async def run_chatbot_async(model_id: str):
                 tool_calls_collected = []
                 print("🤖 Assistant: ", end="", flush=True)
                 full_content = ""
+                had_newline = False
                 try:
                     async for token in _llama_chat_stream(messages, current_model_id, tool_calls_collector=tool_calls_collected):
                         if _esc_pressed.is_set():
                             print("\n[Interrotto]")
                             break
+                        if had_newline:
+                            token = "    " + token
+                        if token.endswith("\n"):
+                            had_newline = True
+                        else:
+                            had_newline = False
                         print(token, end="", flush=True)
                         full_content += token
                     print()

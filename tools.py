@@ -16,6 +16,55 @@ import yaml
 # Lock per sincronizzare output
 _spinner_lock = threading.Lock()
 
+# Tools definition per llama.cpp - usato da frontend.py
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read",
+            "description": "Read the content of a file. Supports offset/limit for pagination.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "description": "Path to the file to read"
+                    },
+                    "offset": {
+                        "type": "number",
+                        "description": "Line number to start reading from (1-indexed)"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "Maximum number of lines to read"
+                    }
+                },
+                "required": ["path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "bash",
+            "description": "Execute a bash command in the current working directory. Returns stdout and stderr.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "command": {
+                        "type": "string",
+                        "description": "Bash command to execute"
+                    },
+                    "timeout": {
+                        "type": "number",
+                        "description": "Timeout in seconds (optional)"
+                    }
+                },
+                "required": ["command"]
+            }
+        }
+    }
+]
 
 def _load_system_prompts() -> dict:
     """Carica i system prompts dal file di configurazione."""
